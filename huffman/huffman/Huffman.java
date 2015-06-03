@@ -5,9 +5,13 @@
  */
 
 package huffman;
-import java.util.*;
-import java.lang.*;
 import java.io.*;
+import java.lang.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  *
  * @author pbladek
@@ -73,14 +77,118 @@ public class Huffman
      */
     public void encode(String fileName)
     {
-      // YOUR CODE HERE
-
+        File inputFile = new File(fileName);
+            if (!((inputFile.exists()) && (inputFile.canRead()))) {
+                inputFile = getFile();
+                fileName =inputFile.getName();
+            }
+            else {
+            inputFile = getFile();
+            fileName = inputFile.getName();  
+        }
+        int[] counter = new int[CHARMAX];  
+        Scanner in = null;
+        List<HuffmanChar> countList = new ArrayList<>();
+        try
+        {
+          in = new Scanner(inputFile);
+        }
+        catch(FileNotFoundException e)
+        {
+            System.out.println("File open error");
+            return;
+        }
+        while(in.hasNextLine())
+        {
+            String line = in.nextLine();
+            line += "\n";
+            for (int i = 0; i < line.length(); i++){
+                Character a = line.charAt(i);
+                counter[a]++;
+            }
+            
+        }
+        for(int i = 0; i < counter.length; i ++)
+        {
+            if(counter[i] > 0)
+            {
+                countList.add(new HuffmanChar((char)i, counter[i]));
+            }
+        }
+        
+        charCountArray = (HuffmanChar[]) countList.toArray();
+        countList = null;
+        Arrays.sort(charCountArray);
+        theTree = new HuffmanTree<>(charCountArray);
+        keyMap = theTree.getCodeMap();
+        
+        try
+        {
+          in = new Scanner(inputFile);
+        }
+        catch(FileNotFoundException e)
+        {
+            System.out.println("File open error");
+        }
+        List<Byte> arrayList = new ArrayList<>();
+        Character character;
+        String output = null;
+        String outputByte = null;
+        int byteCounter = 0;
+        while(in.hasNextLine())
+        {
+             String line = in.nextLine();
+             line += "\n";
+             for(int i = 0; i < line.length(); i++)
+             {
+                 character = line.charAt(i);
+                 try{
+                     output += keyMap.get(character);
+                 }
+                 catch(NullPointerException e)
+                 {
+                     System.out.println("The value not exist");
+                     return;
+                 }
+                 while(output.length() > CHARBITS)
+                 {
+                     outputByte = output.substring(0,8);
+                     if(output.length() > 8)
+                         output = output.substring(8);
+                     else
+                         output = "";
+                     arrayList.add((byte)Integer.parseInt(outputByte));
+                 }
+             }
+            
+        }
+        while(output.length() != 0 && output.length() < 8)
+            output += "0";
+        arrayList.add((byte)Integer.parseInt(outputByte));
+        byteArray = toArray(arrayList);
+        arrayList = null;
+        
+        
+        
 
 
         writeEncodedFile(byteArray, fileName);
         writeKeyFile(fileName);
     } 
- 
+    /**
+     *Takes List and converts it to primitive byte array
+     * @param arrayList of Byte to convert
+     * @return byte[] array
+     */
+    public byte[] toArray(List<Byte> arrayList)
+    {
+        byte[] bytesArray = new byte[arrayList.size()];
+        for( int i = 0; i < arrayList.size(); i++ )
+        {
+            bytesArray[i] = arrayList.get(i);
+        }
+        return bytesArray;
+    }
     /*
      * decode
      * @param inFileName the file to decode
@@ -107,8 +215,32 @@ public class Huffman
      */
     public void writeKeyFile(String fileName)
     {
-  
+        
+    }
+         /**
+     * The method to get the file.
+     * @return the selected file
+     */
+    private static File getFile(){
+         String inputFileName = "x";
+        File inputFile = new File(inputFileName);
+        JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter exten = new FileNameExtensionFilter("Text Document", "txt");
+        chooser.setFileFilter(exten);
+        chooser.setCurrentDirectory(inputFile.getAbsoluteFile()
+                .getParentFile());
+        int returnValue = chooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION){
+            inputFile = chooser.getSelectedFile();
+            if(!inputFile.exists() || !inputFile.canRead()){
+                JOptionPane.showMessageDialog(null,"Can not read this file,"
+                        + " please try another");
+                getFile();
+            }
+        }
+        return inputFile;
     }
  
 }
+
 
