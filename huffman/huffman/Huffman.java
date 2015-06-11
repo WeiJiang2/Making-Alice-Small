@@ -5,10 +5,9 @@
  */
 
 package huffman;
-import java.io.*;
-import java.lang.*;
-import java.lang.reflect.Array;
 import java.util.*;
+import java.lang.*;
+import java.io.*;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -116,12 +115,13 @@ public class Huffman
             }
         }
         
-        charCountArray = (HuffmanChar[]) countList.toArray();
+        charCountArray = countList.toArray(new HuffmanChar[countList.size()] );
         countList = null;
         Arrays.sort(charCountArray);
         theTree = new HuffmanTree<>(charCountArray);
         keyMap = theTree.getCodeMap();
-        
+        codeMap = theTree.getKeyMap();
+        System.out.println("" + codeMap);
         try
         {
           in = new Scanner(inputFile);
@@ -130,36 +130,24 @@ public class Huffman
         {
             System.out.println("File open error");
         }
-        List<Byte> arrayList = new ArrayList<>();
+        ArrayList<Byte> arrayList = new ArrayList<>();
         Character character;
-        String output = null;
+        String output = "";
         String outputByte = null;
-        int byteCounter = 0;
         while(in.hasNextLine())
         {
              String line = in.nextLine();
              line += "\n";
              for(int i = 0; i < line.length(); i++)
              {
-                 character = line.charAt(i);
-                 try{
-                     output += keyMap.get(character);
-                 }
-                 catch(NullPointerException e)
-                 {
-                     System.out.println("The value not exist");
-                     return;
-                 }
-                 while(output.length() > CHARBITS)
-                 {
+                output += keyMap.get(line.charAt(i));
+                while(output.length() > CHARBITS)
+                {
                      outputByte = output.substring(0,8);
-                     if(output.length() > 8)
-                         output = output.substring(8);
-                     else
-                         output = "";
-                     arrayList.add((byte)Integer.parseInt(outputByte));
-                 }
-             }
+                     output = output.substring(8);
+                     arrayList.add((byte)Integer.parseInt(outputByte, 2));
+                }
+            }
             
         }
         while(output.length() != 0 && output.length() < 8)
@@ -205,8 +193,17 @@ public class Huffman
      */ 
     public void writeEncodedFile(byte[] bytes, String fileName)
     {
-      
-
+        String encodeFileName =
+                fileName.substring(0, fileName.lastIndexOf(".")) + ".huf";
+        try (ObjectOutputStream outputStream = new ObjectOutputStream(
+                new FileOutputStream(encodeFileName))) {
+            outputStream.write(bytes);
+        }
+        
+        catch(IOException e)
+        {
+            System.out.println("File open error");
+        }
     }
    
     /**
@@ -215,9 +212,30 @@ public class Huffman
      */
     public void writeKeyFile(String fileName)
     {
-        
+        String keyFileName =
+                fileName.substring(0, fileName.lastIndexOf(".")) + ".cod";
+        saveDataArray = new byte[charCountArray.length * 3];
+        for(int i = 0; i < charCountArray.length; i++)
+        {
+            byte[] threeByteArray = charCountArray[i].toThreeBytes();
+            saveDataArray[3 * i] = threeByteArray[0];
+            saveDataArray[3 * i + 1] = threeByteArray[1];
+            saveDataArray[3 * i + 2] = threeByteArray[2];
+        }
+        try (ObjectOutputStream outputStream = new ObjectOutputStream(
+                new FileOutputStream(keyFileName))) {
+            for (int i = 0; i <saveDataArray.length; i++)
+            {
+                outputStream.writeByte(saveDataArray[i]);
+            }
+            outputStream.close();
+        }
+        catch(IOException e)
+        {
+            System.out.println("File open error");
+        }
     }
-         /**
+     /**
      * The method to get the file.
      * @return the selected file
      */
