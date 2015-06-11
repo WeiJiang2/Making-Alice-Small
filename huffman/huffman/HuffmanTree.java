@@ -42,19 +42,22 @@ public class HuffmanTree<T extends Comparable<? super T>>
             BinaryNode<HuffmanData<T>> node = new BinaryNode<>(element);    
             nodeList.add(node);  
         }     
-        System.out.println("1");
-    while(nodeList.size() > 1)    
-       {       
-         this.add(nodeList.poll(),nodeList.poll()); 
-         for(int i =0; i < nodeList.size(); i++){
-            if(nodeList.get(i).getData().compareTo(getRootData()) > 0){
+        while(nodeList.size() > 1)    
+        {    
+          boolean addBack = false;
+          this.add(nodeList.poll(),nodeList.poll()); 
+          for(int i =0; i < nodeList.size()&!addBack; i++){
+             if(nodeList.get(i).getData().compareTo(getRootData()) > 0){
                 nodeList.add(i,(BinaryNode<HuffmanData<T>>)this.getRootNode());
-                break;}
+                addBack = true;
+                break;
             }
+            }
+         if(!addBack){
         nodeList.add(0,(BinaryNode<HuffmanData<T>>)this.getRootNode());
+         }
         //new node add to nodeQueue
-       }    
-        System.out.println("2");
+       }      
         keyMap = new TreeMap<>();
         codeMap = new TreeMap<>();
         setMaps(getRootNode(), "");
